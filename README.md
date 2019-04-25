@@ -8,7 +8,7 @@ With this [Snips](https://snips.ai/) app, you can ask some information about you
 
 The easiest way to install this app is by adding the corresponding Snips app to your assistant in the [Snips Console](https://console.snips.ai):
 
-*   English: [Assistant information](https://console.snips.ai/store/en/skill_O77ngOyralB)
+*   English: [Assistant Onboarding](https://console.snips.ai/store/en/skill_O77ngOyralB)
 
 ## Usage
 
