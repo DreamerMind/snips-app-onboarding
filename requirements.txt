@@ -1,0 +1,3 @@
+snipskit[hermes,mqtt]==0.6.0
+snips-app-helpers>=0.0.9,<0.1.0
+python-Levenshtein==0.12.0
