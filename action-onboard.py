@@ -80,7 +80,7 @@ class OnBoardingApp(HermesSnipsApp):
         self.tts(i18n.WELCOME)
         self.tell_hotword()
         self.tell_ask_help()
-        # TODO tell Apps Statuses
+        # TODO tell Apps Statuses which are starts which aren't
 
     def tell_hotword(self):
         self.tts(i18n.CURRENT_HOTWORD_IS % self._assistant.hotword)
