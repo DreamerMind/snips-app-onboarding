@@ -124,7 +124,8 @@ class OnBoardingApp(HermesSnipsApp):
                 [
                     i18n.NO_CURRENT_INTENT_IS_NAMED,
                     asr_intent_name,
-                    i18n.X_INTENTS,
+                    i18n.X_INTENTS
+                    % len(self._assistant.dataset.intent_per_name.keys()),
                     i18n.DO_YOU_WANT_INTENT_LIST,
                 ],
             )
