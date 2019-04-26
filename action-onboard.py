@@ -90,9 +90,10 @@ class OnBoardingApp(HermesSnipsApp):
 
     def _chain_tts_response(self, hermes, intent_message, to_speak_list):
         for sitem in to_speak_list:
-            hermes.publish_continue_session(
-                intent_message.session_id, sitem, []
-            )
+            # hermes.publish_continue_session(
+            # intent_message.session_id, sitem, []
+            # )
+            self.tts(sitem)
 
     @intent(i18n.INTENT_SAMPLE)
     def handle_intent_sample(self, hermes, intent_message):
@@ -112,13 +113,10 @@ class OnBoardingApp(HermesSnipsApp):
                 )
             ]
             self._chain_tts_response(
-                hermes, intent_message, [i18n.HERE_IS_EXAMPLES, intent_name]
+                hermes,
+                intent_message,
+                [i18n.HERE_IS_EXAMPLES, intent_name] + sampled_utterances,
             )
-            for _ in sampled_utterances:
-                hermes.publish_continue_session(
-                    intent_message.session_id, _, []
-                )
-                time.sleep(.4)
         except KeyError:
             self._chain_tts_response(
                 hermes,
