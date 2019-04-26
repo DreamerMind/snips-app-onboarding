@@ -8,6 +8,7 @@ import pathlib
 import importlib
 import random
 import json
+import time
 
 from paho.mqtt.client import Client as pahoClient
 
@@ -16,6 +17,8 @@ from snipskit.hermes.apps import HermesSnipsApp
 from snipskit.mqtt.client import connect as mqtt_connect
 from snipskit.hermes.decorators import intent
 from snips_app_helpers.snips import Assistant
+
+from services import vocal
 
 assistant_path = "/usr/share/snips/assistant/assistant.json"
 
@@ -27,14 +30,6 @@ i18n = importlib.import_module(
 )
 
 
-def prononcable(text):
-    for _ in "_-,.:/!<>*#[]()=":
-        text = text.replace(_, " ")
-    text = text.replace("@", "at")
-    text = text.replace("&", "and")
-    return text.lower()
-
-
 class OnBoardingApp(HermesSnipsApp):
     """
     This app answers questions about your Snips assistant.
@@ -43,7 +38,7 @@ class OnBoardingApp(HermesSnipsApp):
     def __init__(self, *args, **kwargs):
         self._assistant = Assistant.load(pathlib.Path(assistant_path))
         self._intent_prononciation_table = {
-            prononcable(_): _
+            vocal.tts_prononcable(_): _
             for _ in self._assistant.dataset.intent_per_name.keys()
         }
         self.mqtt = None
@@ -56,57 +51,84 @@ class OnBoardingApp(HermesSnipsApp):
         """
         self.mqtt = pahoClient()
         mqtt_connect(self.mqtt, self.snips.mqtt)
-        self._inject()
+        self._inject(
+            i18n.INTENT_SAMPLE_SLOT_NAME, list(self._intent_prononciation_table)
+        )
         print("Onboarding start")
+        self._onboarding()
         self.hermes.loop_forever()
 
-    def _inject(self):
+    def _inject(self, key, values):
         """
             perform intent name injection which favorize prononication
         """
-        # TODO analyse If I should keep track of already added or if system
-        # is smart enought to discard recompute if there is no  change
         print("injection asked")
         self.mqtt.publish(
             MQTT_TOPIC_INJECT,
             payload=str(
-                json.dumps(
-                    {
-                        "operations": [
-                            [
-                                "addFromVanilla",
-                                {
-                                    i18n.INTENT_SAMPLE_SLOT_NAME: list(
-                                        self._intent_prononciation_table
-                                    )
-                                },
-                            ]
-                        ]
-                    }
-                )
+                json.dumps({"operations": [["addFromVanilla", {key: values}]]})
             ),
         )
+
+    def tts(self, text):
+        self.hermes.publish_start_session_notification(
+            site_id=None, custom_data=None, session_initiation_text=text
+        )
+
+    def _onboarding(self):
+        # once app is up launch startup info
+        self.tts(i18n.WELCOME)
+        self.tell_hotword()
+        self.tell_ask_help()
+        # TODO tell Apps Statuses
+
+    def tell_hotword(self):
+        self.tts(i18n.CURRENT_HOTWORD_IS % self._assistant.hotword)
+
+    def tell_ask_help(self):
+        self.tts(i18n.ASK_FOR_HELP)
+
+    def _chain_tts_response(self, hermes, intent_message, to_speak_list):
+        for sitem in to_speak_list:
+            hermes.publish_continue_session(intent_message.session_id, sitem)
 
     @intent(i18n.INTENT_SAMPLE)
     def handle_intent_sample(self, hermes, intent_message):
         """Handle the intent Sample presentation."""
+
         print("handle intent sample")
         asr_intent_name = intent_message.slots.intentName[0].raw_value
-        intent_name = self._intent_prononciation_table[asr_intent_name]
-        sampled_utterances = [
-            utterance.text
-            for utterance in random.sample(
-                self._assistant.dataset.intent_per_name[intent_name].utterances,
-                3,
+        try:
+            intent_name = self._intent_prononciation_table[asr_intent_name]
+            sampled_utterances = [
+                utterance.text
+                for utterance in random.sample(
+                    self._assistant.dataset.intent_per_name[
+                        intent_name
+                    ].utterances,
+                    3,
+                )
+            ]
+            self._chain_tts_response(
+                hermes, intent_message, [i18n.HERE_IS_EXAMPLES, intent_name]
             )
-        ]
-        result_sentence = i18n.HERE_IS_EXAMPLES % (
-            intent_name,
-            ". ".join(sampled_utterances),
-        )
-        hermes.publish_end_session(intent_message.session_id, result_sentence)
-
-    # TODO once app is up launch startup info
+            for _ in sampled_utterances:
+                hermes.publish_continue_session(intent_message.session_id, _)
+                time.sleep(.4)
+        except KeyError:
+            self._chain_tts_response(
+                hermes,
+                intent_message,
+                [
+                    i18n.NO_CURRENT_INTENT_IS_NAMED,
+                    asr_intent_name,
+                    i18n.X_INTENTS,
+                    i18n.DO_YOU_WANT_INTENT_LIST,
+                ],
+            )
+            # TODO filter [yes/no] intent
+            # TODO launch intent listing
+        hermes.publish_end_session(intent_message.session_id, "")
 
 
 if __name__ == "__main__":
