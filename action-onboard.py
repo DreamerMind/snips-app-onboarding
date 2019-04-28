@@ -8,13 +8,12 @@ import pathlib
 import importlib
 import random
 import json
-import time
 
 from paho.mqtt.client import Client as pahoClient
 
 from snipskit.apps import SnipsAppMixin
 from snipskit.hermes.apps import HermesSnipsApp
-from snipskit.mqtt.client import connect as mqtt_connect
+from snipskit.mqtt.client import publish_single
 from snipskit.hermes.decorators import intent
 from snips_app_helpers.snips import Assistant
 
@@ -49,8 +48,6 @@ class OnBoardingApp(HermesSnipsApp):
         """Start the event loop to the Hermes object so the component
         starts listening to events and the callback methods are called.
         """
-        self.mqtt = pahoClient()
-        mqtt_connect(self.mqtt, self.snips.mqtt)
         self._inject(
             i18n.INTENT_SAMPLE_SLOT_NAME, list(self._intent_prononciation_table)
         )
@@ -63,9 +60,10 @@ class OnBoardingApp(HermesSnipsApp):
             perform intent name injection which favorize prononication
         """
         print("injection asked")
-        self.mqtt.publish(
+        publish_single(
+            self.snips.mqtt,
             MQTT_TOPIC_INJECT,
-            payload=str(
+            str(
                 json.dumps({"operations": [["addFromVanilla", {key: values}]]})
             ),
         )
@@ -79,8 +77,8 @@ class OnBoardingApp(HermesSnipsApp):
         # once app is up launch startup info
         self.tts(i18n.WELCOME)
         self.tell_hotword()
+        self.tell_action_code_list()
         self.tell_ask_help()
-        # TODO tell Apps Statuses which are starts which aren't
 
     def tell_hotword(self):
         self.tts(i18n.CURRENT_HOTWORD_IS % self._assistant.hotword)
@@ -88,11 +86,24 @@ class OnBoardingApp(HermesSnipsApp):
     def tell_ask_help(self):
         self.tts(i18n.ASK_FOR_HELP)
 
+    def tell_action_code_list(self):
+        # taken from action code
+        # https://github.com/koenvervloesem/snips-app-assistant-information
+        apps = [
+            str(app)
+            for app in (
+                pathlib.Path(self.assistant.filename).parent / "snippets"
+            ).iterdir()
+        ]
+        apps = [vocal.tts_prononcable(app[app.find(".") + 1 :]) for app in apps]
+        num_apps = len(apps)
+        result_sentence = i18n.RESULT_ASSISTANT_APPS
+        if num_apps < 10:
+            result_sentence = result_sentence + " " + ", ".join(apps)
+        self.tts(result_sentence)
+
     def _chain_tts_response(self, hermes, intent_message, to_speak_list):
         for sitem in to_speak_list:
-            # hermes.publish_continue_session(
-            # intent_message.session_id, sitem, []
-            # )
             self.tts(sitem)
 
     @intent(i18n.INTENT_SAMPLE)
@@ -126,11 +137,9 @@ class OnBoardingApp(HermesSnipsApp):
                     asr_intent_name,
                     i18n.X_INTENTS
                     % len(self._assistant.dataset.intent_per_name.keys()),
-                    i18n.DO_YOU_WANT_INTENT_LIST,
                 ],
             )
-            # TODO filter [yes/no] intent
-            # TODO launch intent listing
+
         hermes.publish_end_session(intent_message.session_id, "")
 
 

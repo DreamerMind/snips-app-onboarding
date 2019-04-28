@@ -14,3 +14,4 @@ ASK_FOR_HELP = (
 NO_CURRENT_INTENT_IS_NAMED = "no current intent is named "
 X_INTENTS = "There is %d intents availlable"
 DO_YOU_WANT_INTENT_LIST = "Do you want me to list them ?"
+LIST_ASSISTANT_APPS = " %d actions codes are installed"
