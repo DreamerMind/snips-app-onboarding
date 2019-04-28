@@ -63,9 +63,7 @@ class OnBoardingApp(HermesSnipsApp):
         publish_single(
             self.snips.mqtt,
             MQTT_TOPIC_INJECT,
-            str(
-                json.dumps({"operations": [["addFromVanilla", {key: values}]]})
-            ),
+            str(json.dumps({"operations": [["add", {key: values}]]})),
         )
 
     def tts(self, text):
@@ -97,7 +95,7 @@ class OnBoardingApp(HermesSnipsApp):
         ]
         apps = [vocal.tts_prononcable(app[app.find(".") + 1 :]) for app in apps]
         num_apps = len(apps)
-        result_sentence = i18n.LIST_ASSISTANT_APPS
+        result_sentence = i18n.LIST_ASSISTANT_APPS % num_apps
         if num_apps < 10:
             result_sentence = result_sentence + " " + ", ".join(apps)
         self.tts(result_sentence)
@@ -105,6 +103,15 @@ class OnBoardingApp(HermesSnipsApp):
     def _chain_tts_response(self, hermes, intent_message, to_speak_list):
         for sitem in to_speak_list:
             self.tts(sitem)
+
+    @intent(i18n.INTENT_LIST)
+    def handle_intent_list(self, hermes, intent_message):
+        self._chain_tts_response(
+            hermes,
+            intent_message,
+            [i18n.HERE_IS_INTENT_LIST]
+            + list(self._intent_prononciation_table.keys()),
+        )
 
     @intent(i18n.INTENT_SAMPLE)
     def handle_intent_sample(self, hermes, intent_message):
