@@ -1,3 +1,2 @@
-paho-mqtt==1.4.0
 snipskit[hermes,mqtt]==0.6.0
 snips-app-helpers>=0.0.10,<0.1.0
