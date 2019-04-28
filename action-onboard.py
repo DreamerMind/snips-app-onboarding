@@ -67,6 +67,8 @@ class OnBoardingApp(HermesSnipsApp):
         )
 
     def tts(self, text):
+        if not isinstance(text, basestring):
+            text = "; ".join(text)
         self.hermes.publish_start_session_notification(
             site_id=None, custom_data=None, session_initiation_text=text
         )
@@ -100,17 +102,11 @@ class OnBoardingApp(HermesSnipsApp):
             result_sentence = result_sentence + " " + ", ".join(apps)
         self.tts(result_sentence)
 
-    def _chain_tts_response(self, hermes, intent_message, to_speak_list):
-        for sitem in to_speak_list:
-            self.tts(sitem)
-
     @intent(i18n.INTENT_LIST)
     def handle_intent_list(self, hermes, intent_message):
-        self._chain_tts_response(
-            hermes,
-            intent_message,
+        self.tts(
             [i18n.HERE_IS_INTENT_LIST]
-            + list(self._intent_prononciation_table.keys()),
+            + list(self._intent_prononciation_table.keys())
         )
 
     @intent(i18n.INTENT_SAMPLE)
@@ -130,21 +126,15 @@ class OnBoardingApp(HermesSnipsApp):
                     3,
                 )
             ]
-            self._chain_tts_response(
-                hermes,
-                intent_message,
-                [i18n.HERE_IS_EXAMPLES, intent_name] + sampled_utterances,
-            )
+            self.tts([i18n.HERE_IS_EXAMPLES, intent_name] + sampled_utterances)
         except KeyError:
-            self._chain_tts_response(
-                hermes,
-                intent_message,
+            self.tts(
                 [
                     i18n.NO_CURRENT_INTENT_IS_NAMED,
                     asr_intent_name,
                     i18n.X_INTENTS
                     % len(self._assistant.dataset.intent_per_name.keys()),
-                ],
+                ]
             )
 
         hermes.publish_end_session(intent_message.session_id, "")
