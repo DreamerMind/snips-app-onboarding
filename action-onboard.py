@@ -67,7 +67,7 @@ class OnBoardingApp(HermesSnipsApp):
         )
 
     def tts(self, text):
-        if not isinstance(text, basestring):
+        if not isinstance(text, str):
             text = "; ".join(text)
         self.hermes.publish_start_session_notification(
             site_id=None, custom_data=None, session_initiation_text=text
