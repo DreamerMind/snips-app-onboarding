@@ -16,7 +16,9 @@ The easiest way to install this app is by adding the corresponding Snips app to 
 
 This app recognizes the following intents:
 
-*   IntentSamples - The user asks the assistant how to call this intent then sample are provided by TTS
+*   IntentSamples - The user asks the assistant how to call this intent then samples are provided by TTS
+*   IntentList - The user asks the assistant list of intents then list is provided by TTS
+
 
 ## Copyright
 
