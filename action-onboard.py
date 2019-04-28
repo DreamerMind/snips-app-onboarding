@@ -97,7 +97,7 @@ class OnBoardingApp(HermesSnipsApp):
         ]
         apps = [vocal.tts_prononcable(app[app.find(".") + 1 :]) for app in apps]
         num_apps = len(apps)
-        result_sentence = i18n.RESULT_ASSISTANT_APPS
+        result_sentence = i18n.LIST_ASSISTANT_APPS
         if num_apps < 10:
             result_sentence = result_sentence + " " + ", ".join(apps)
         self.tts(result_sentence)
