@@ -2,6 +2,8 @@
 
 [![Python versions](https://img.shields.io/badge/python-3.5|3.6|3.7-blue.svg)](https://www.python.org) [![Languages](https://img.shields.io/badge/i18n-en-brown.svg)](https://github.com/DreamerMind/snips-app-onboarding/tree/master/translations) [![Snips App Store](https://img.shields.io/badge/snips-app-blue.svg)](https://console.snips.ai/store/en/skill_O77ngOyralB)
 
+`WARNING ! can be used by internal snipsters only for now :( due to dataset.json shipping limitation`
+
 With this [Snips](https://snips.ai/) app, you can ask some informations about
 your Snips assistant and have an onboarding at startup about which hotword is
 setted up, how to call intents.
